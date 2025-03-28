@@ -58,9 +58,8 @@ const Searchbar = () => {
     
     let currentPlace = null;
     lines.forEach(line => {
-      line = line.trim();
+      line = line.trim().replace(/\*\*/g, '');
       
-      // Detect a new place entry
       if (line.match(/^\d+\./)) {
         if (currentPlace) {
           places.push(currentPlace);
@@ -71,7 +70,6 @@ const Searchbar = () => {
           type: ''
         };
       } else if (currentPlace) {
-        // Accumulate description and type
         if (!currentPlace.description) {
           currentPlace.description = line;
         } else if (!currentPlace.type && line.toLowerCase().includes('type:')) {
@@ -80,25 +78,11 @@ const Searchbar = () => {
       }
     });
 
-    // Add the last place
     if (currentPlace) {
       places.push(currentPlace);
     }
 
     return places;
-  };
-
-  // Handle input change
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setQuery(value);
-    setShowSuggestions(true);
-  };
-
-  // Handle suggestion click
-  const handleSuggestionClick = (suggestion) => {
-    setQuery(suggestion.fullName);
-    setShowSuggestions(false);
   };
 
   // Fetch weather data
@@ -149,7 +133,6 @@ const Searchbar = () => {
       setWeatherData(null);
     }
   };
-  
 
   // Fetch tourist places using Gemini
   const fetchTouristPlaces = async () => {
@@ -186,6 +169,19 @@ const Searchbar = () => {
     }
   };
 
+  // Handle input change
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    setShowSuggestions(true);
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setQuery(suggestion.fullName);
+    setShowSuggestions(false);
+  };
+
   // Debounce suggestions
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -197,104 +193,107 @@ const Searchbar = () => {
 
   // Render the component
   return (
-    <div className="container mx-auto p-4">
-      <div className="search-container" ref={searchRef}>
-        <div className="flex items-center space-x-2 mb-6">
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              value={query}
-              onChange={handleInputChange}
-              placeholder="Search for a city or tourist destination"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onFocus={() => setShowSuggestions(true)}
-            />
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-                {suggestions.map((suggestion) => (
-                  <li
-                    key={suggestion.id}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+    <div className="bg-white min-h-screen text-black">
+      <div className="container mx-auto px-4 py-8">
+        {/* Centered Search Container */}
+        <div className="max-w-xl mx-auto mb-8">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                value={query}
+                onChange={handleInputChange}
+                placeholder="Search for a city or tourist destination"
+                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onFocus={() => setShowSuggestions(true)}
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  {suggestions.map((suggestion) => (
+                    <li
+                      key={suggestion.id}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {suggestion.fullName}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <button 
+              onClick={fetchTouristPlaces}
+              className="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+
+        {isLoading && (
+          <div className="text-center mt-4">
+            <p>Loading information...</p>
+          </div>
+        )}
+
+        {touristPlaces.length > 0 && (
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Tourist Places Section */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-2xl font-bold mb-6 text-blue-600">Top Tourist Places in {query}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {touristPlaces.map((place, index) => (
+                  <div 
+                    key={index} 
+                    className="bg-gray-100 rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow"
                   >
-                    {suggestion.fullName}
-                  </li>
+                    <h3 className="text-lg font-semibold mb-2 text-blue-800">{place.name}</h3>
+                    <p className="text-gray-700 mb-3 text-sm">{place.description}</p>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      {place.type}
+                    </span>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            </div>
+
+            {/* Weather Section */}
+            {weatherData && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-2xl font-bold mb-6 text-blue-600">Weather in {query}</h2>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <img 
+                      src={weatherData.icon} 
+                      alt="Weather icon" 
+                      className="w-20 h-20"
+                    />
+                    <h3 className="text-xl font-semibold">{weatherData.placeName}, {weatherData.country}</h3>
+                    <p className="text-gray-600">{weatherData.condition}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-bold text-blue-700">{weatherData.temperature}°C</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-4 text-center">
+                  <div>
+                    <p className="font-medium text-gray-600">Humidity</p>
+                    <p className="text-blue-800">{weatherData.humidity}%</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-600">Pressure</p>
+                    <p className="text-blue-800">{weatherData.pressure} mb</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-600">Precipitation</p>
+                    <p className="text-blue-800">{weatherData.precipitation} mm</p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
-          <button 
-            onClick={fetchTouristPlaces}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Search
-          </button>
-        </div>
+        )}
       </div>
-
-      {isLoading && (
-        <div className="text-center mt-4">
-          <p>Loading information...</p>
-        </div>
-      )}
-
-      {touristPlaces.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tourist Places Section */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4">Top Tourist Places in {query}</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {touristPlaces.map((place, index) => (
-                <div 
-                  key={index} 
-                  className="bg-gray-100 rounded-lg p-4 border border-gray-200"
-                >
-                  <h3 className="text-lg font-semibold mb-2">{place.name}</h3>
-                  <p className="text-gray-600 mb-2">{place.description}</p>
-                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    {place.type}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Weather Section */}
-          {weatherData && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold mb-4">Weather in {query}</h2>
-              <div className="flex items-center justify-between">
-                <div>
-                  <img 
-                    src={`https:${weatherData.icon}`} 
-                    alt="Weather icon" 
-                    className="w-20 h-20"
-                  />
-                  <h3 className="text-xl font-semibold">{weatherData.placeName}, {weatherData.country}</h3>
-                  <p className="text-gray-600">{weatherData.condition}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-4xl font-bold">{weatherData.temperature}°C</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <p className="font-medium">Humidity</p>
-                  <p>{weatherData.humidity}%</p>
-                </div>
-                <div>
-                  <p className="font-medium">Pressure</p>
-                  <p>{weatherData.pressure} mb</p>
-                </div>
-                <div>
-                  <p className="font-medium">Precipitation</p>
-                  <p>{weatherData.precipitation} mm</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
