@@ -1,56 +1,36 @@
-import React from 'react'
-import '../styles/home.css'
-import SearchBar from '../shared/SearchBar';
-import { Container, Row,Col } from 'reactstrap';
-// import ServiceList from '../services/ServiceList';
-// import Itinerary from '../services/Itinerary';
+import React, { useState } from 'react';
+import Searchbar from '../shared/SearchBar';
+import TouristPlacesCard from '../shared/Tourist-places';
+import WeatherInfo from './../shared/weather';
 
 const Home = () => {
+  const [selectedLocation, setSelectedLocation] = useState(null);
+
+  const handleLocationSelected = (location) => {
+    setSelectedLocation(location);
+  };
+
   return (
-    <div className='homec'>
-      <section>
-      <Container>
-        <Row>
-          <SearchBar></SearchBar>
-        </Row>
-      </Container>
-    </section>
-    {/* <section>
-      <Container>
-        <Row>
-          <Col lg='3'>
-          <h3 className='services__title'>Our Services</h3>
-          </Col>
-          <ServiceList></ServiceList>
-        </Row>
-      </Container>
-    </section> */}
-
-    {/* <section>
-      <Container>
-        <Row>
-          <Itinerary></Itinerary>
-        </Row>
-      </Container>
-    </section> */}
-
-    {/* featured tours start */}
-    
-      {/*<section>
-      <Container>
-        <Row>
-          <Col lg='12' className='mb-5'>
-          <h2 className='featured__tour-title'>Our Featured Tours</h2>
-          </Col>
-        </Row>
-      </Container>
-    </section>
-      */}
-    {/* featured tours end */}
+    <div className="min-h-screen bg-gray-100 py-10">
+      <div className="container mx-auto px-4">
+        <Searchbar onLocationSelected={handleLocationSelected} />
+        
+        {selectedLocation && (
+          <>
+            <div className="bg-white rounded-lg shadow-md my-6">
+              <h2 className="text-2xl font-bold p-4">Tourist Places in {selectedLocation.name}</h2>
+              <TouristPlacesCard location={selectedLocation} />
+            </div>
+            
+            <div className="bg-white rounded-lg shadow-md">
+              <h2 className="text-2xl font-bold p-4">Weather Information</h2>
+              <WeatherInfo location={selectedLocation} />
+            </div>
+          </>
+        )}
+      </div>
     </div>
-    
-    
-  )
-}
+  );
+};
 
 export default Home;
